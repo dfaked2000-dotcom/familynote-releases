@@ -1,0 +1,40 @@
+name: Build BT580 Config APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "bt580-config/**"
+      - ".github/workflows/build-bt580.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build debug APK
+        working-directory: bt580-config
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp bt580-config/app/build/outputs/apk/debug/app-debug.apk BT580Config.apk
+
+      - name: Publish release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: bt580-build-${{ github.run_number }}
+          name: BT580 Config build ${{ github.run_number }}
+          files: BT580Config.apk
